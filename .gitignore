@@ -1,0 +1,15 @@
+# 密钥文件，严禁入库
+config.json
+*.csv
+SecretKey*
+
+# 运行产物与缓存
+__pycache__/
+.tier_cache.json
+素材包.md
+*.log
+
+# 内部材料，不入公开仓库
+待办清单.md
+征文正文截图.png
+界面预览.png

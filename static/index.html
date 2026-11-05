@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>备课素材包生成器 · 元宝搜索</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --line:#e5e8ee; --ink:#151a21;
+    --sub:#697484; --accent:#0052d9; --accent-soft:#eaf1ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB","Segoe UI",sans-serif;
+    font-size:14px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px}
+
+  /* 顶部 */
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{
+    width:46px;height:46px;border-radius:12px;flex:none;
+    background:linear-gradient(135deg,#0052d9,#3b82f6);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:600;letter-spacing:0;
+  }
+  h1{font-size:19px;font-weight:600;letter-spacing:.2px}
+  .sub{font-size:12.5px;color:var(--sub);margin-top:2px}
+  .mode{
+    font-size:12.5px;padding:6px 14px;border-radius:20px;
+    background:#fff;border:1px solid var(--line);color:var(--sub);white-space:nowrap;
+  }
+  .mode.live{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+  .mode.demo{background:#fffbeb;border-color:#fde68a;color:#b45309}
+
+  /* 检索面板 */
+  .panel{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;
+    box-shadow:0 1px 2px rgba(16,24,40,.04);
+  }
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.grow{flex:1;min-width:240px}
+  label{font-size:12px;color:var(--sub);letter-spacing:.3px}
+  input,select{
+    height:40px;border:1px solid var(--line);border-radius:9px;padding:0 12px;
+    font-size:14px;color:var(--ink);background:#fbfcfe;outline:none;
+    font-family:inherit;transition:border-color .15s,box-shadow .15s;
+  }
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,82,217,.10);background:#fff}
+  input::placeholder{color:#a4adba}
+  select{min-width:96px;cursor:pointer}
+  button#go{
+    height:40px;padding:0 22px;border:none;border-radius:9px;cursor:pointer;
+    background:var(--accent);color:#fff;font-size:14px;font-weight:500;
+    font-family:inherit;transition:background .15s,transform .06s;
+  }
+  button#go:hover{background:#0043b0}
+  button#go:active{transform:translateY(1px)}
+  button#go:disabled{background:#9db4d8;cursor:not-allowed}
+
+  /* 指标条 */
+  .metrics{display:none;gap:10px;margin-top:14px;flex-wrap:wrap}
+  .metrics.on{display:flex}
+  .metric{
+    flex:1;min-width:130px;background:var(--card);border:1px solid var(--line);
+    border-radius:11px;padding:10px 14px;
+  }
+  .metric .k{font-size:11.5px;color:var(--sub);letter-spacing:.3px}
+  .metric .v{font-size:16px;font-weight:600;margin-top:1px}
+  .metric .v small{font-size:11.5px;font-weight:400;color:var(--sub);margin-left:3px}
+
+  /* 实参 */
+  .params{display:none;margin-top:10px;background:#fff;border:1px dashed #cfd8e6;border-radius:11px;padding:12px 14px}
+  .params.on{display:block}
+  .params .ttl{font-size:12px;color:var(--sub);margin-bottom:8px}
+  .chip{
+    display:inline-block;font-size:11.5px;font-family:Consolas,Menlo,monospace;
+    background:#f3f6fb;border:1px solid #e2e8f2;border-radius:6px;
+    padding:4px 9px;margin:0 6px 6px 0;color:#334155;word-break:break-all;
+  }
+  .chip b{color:var(--accent);font-weight:600}
+  .warn{font-size:12px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;margin-top:10px}
+
+  /* 结果区 */
+  main{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  .board{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .board-hd{
+    display:flex;align-items:center;gap:9px;padding:12px 16px;
+    border-bottom:1px solid var(--line);background:#fcfdff;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .board-hd h2{font-size:14px;font-weight:600}
+  .cnt{margin-left:auto;font-size:11.5px;color:var(--sub);background:#f1f4f9;border-radius:20px;padding:2px 9px}
+  .board-bd{padding:6px 16px 12px}
+  .item{padding:12px 0;border-bottom:1px dashed #eef1f6}
+  .item:last-child{border-bottom:none}
+  .item a{
+    color:var(--ink);text-decoration:none;font-size:13.5px;font-weight:500;
+    display:block;line-height:1.55;
+  }
+  .item a:hover{color:var(--accent);text-decoration:underline}
+  .meta{font-size:11.5px;color:var(--sub);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .meta .site{color:#475569}
+  .badge{font-size:10.5px;padding:1px 7px;border-radius:4px;line-height:1.7}
+  .b-auth{background:#fef3c7;color:#b45309}
+  .b-fresh{background:#d1fae5;color:#047857}
+  .b-score{background:#eef2f7;color:#4b5563;font-family:Consolas,monospace}
+  .excerpt{font-size:12.5px;color:#4a5566;margin-top:6px;line-height:1.7;
+    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .empty{color:var(--sub);font-size:12.5px;padding:18px 0;text-align:center}
+
+  /* 底部操作 */
+  .actions{display:none;gap:10px;margin-top:18px;justify-content:flex-end}
+  .actions.on{display:flex}
+  .ghost{
+    height:38px;padding:0 18px;border-radius:9px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);font-size:13.5px;cursor:pointer;font-family:inherit;
+  }
+  .ghost:hover{border-color:var(--accent);color:var(--accent)}
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:11.5px;color:#94a0b0;line-height:1.9}
+  .tip{color:#b45309}
+  .skeleton{height:120px;border-radius:10px;background:linear-gradient(90deg,#f5f7fa 25%,#eceff4 37%,#f5f7fa 63%);
+    background-size:400% 100%;animation:sk 1.3s infinite}
+  @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="logo">元</div>
+      <div>
+        <h1>备课素材包生成器</h1>
+        <div class="sub">腾讯云元宝搜索 SearchPro ｜ 教学素材检索与结构化整理</div>
+      </div>
+    </div>
+    <div class="mode" id="mode">检测接口状态…</div>
+  </header>
+
+  <section class="panel">
+    <div class="field grow">
+      <label>教学课题</label>
+      <input id="topic" placeholder="输入课题，例如：算法的初步认识、数据的收集与整理" maxlength="40">
+    </div>
+    <div class="field">
+      <label>学段</label>
+      <select id="stage">
+        <option selected>小学</option><option>初中</option><option>高中</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>学科</label>
+      <select id="subject">
+        <option selected>信息科技</option><option>语文</option><option>数学</option><option>英语</option>
+        <option>科学</option><option>道德与法治</option><option>体育与健康</option><option>艺术</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>时效范围</label>
+      <select id="freshness">
+        <option value="">不限</option>
+        <option value="d7">近 7 天</option>
+        <option value="m3">近 3 月</option>
+        <option value="y2">近 2 年</option>
+      </select>
+    </div>
+    <button id="go">检索并生成</button>
+  </section>
+
+  <div class="metrics" id="metrics"></div>
+  <div class="params" id="params"></div>
+  <main id="boards"></main>
+
+  <div class="actions" id="actions">
+    <button class="ghost" id="copyBtn">复制 Markdown</button>
+    <button class="ghost" id="dlBtn">导出 .md 文件</button>
+  </div>
+
+  <footer>
+    数据来源：腾讯云元宝搜索（SearchPro / wsa.tencentcloudapi.com）。所有摘录均保留原始链接，引用内容版权归原站点所有。<br>
+    素材包为备课辅助，正式教学使用前请核对教材版本与课标要求。
+  </footer>
+</div>
+
+<script>
+const CAT_COLOR = {"教材依据":"#2563eb","考点解析":"#7c3aed","实践活动":"#059669","延伸拓展":"#db2777"};
+const CAT_ORDER = ["教材依据","考点解析","实践活动","延伸拓展"];
+let lastPack = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+fetch("/api/config").then(r=>r.json()).then(c=>{
+  const el = $("mode");
+  if(c.has_key){ el.textContent = "真实调用模式 · 密钥已就绪"; el.className = "mode live"; }
+  else { el.textContent = "演示模式 · 未配置密钥"; el.className = "mode demo"; }
+}).catch(()=>{});
+
+$("go").addEventListener("click", doSearch);
+$("topic").addEventListener("keydown", e=>{ if(e.key==="Enter") doSearch(); });
+
+async function doSearch(){
+  const topic = $("topic").value.trim();
+  if(!topic){ $("topic").focus(); return; }
+  const btn = $("go");
+  btn.disabled = true; btn.textContent = "检索中…";
+  $("boards").innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
+  $("metrics").className = "metrics";
+  $("params").className = "params";
+  $("actions").className = "actions";
+
+  try{
+    const r = await fetch("/api/search", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        topic, stage:$("stage").value, subject:$("subject").value, freshness:$("freshness").value
+      })
+    });
+    const pack = await r.json();
+    if(pack.error){
+      $("boards").innerHTML = '<div class="board" style="grid-column:1/-1"><div class="board-bd"><div class="empty" style="color:#b91c1c">'+esc(pack.error)+'</div>'
+        + (pack.hint? '<div class="warn" style="margin:10px 0 4px">排查建议：'+esc(pack.hint)+'</div>':'')
+        + '</div></div>';
+      return;
+    }
+    lastPack = pack;
+    render(pack);
+  }catch(e){
+    $("boards").innerHTML = '<div class="board" style="grid-column:1/-1"><div class="board-bd"><div class="empty" style="color:#b91c1c">请求失败：'+esc(e.message)+'</div></div></div>';
+  }finally{
+    btn.disabled = false; btn.textContent = "检索并生成";
+  }
+}
+
+function render(p){
+  // 指标
+  const m = [];
+  m.push(["检索档位", p.tier_cn || p.tier, ""]);
+  m.push(["检索路数", p.calls || 4, "路"]);
+  m.push(["命中 → 去重", (p.total_before||0) + " → " + (p.total_after||0), "条"]);
+  m.push(["总耗时", (p.elapsed||0).toFixed(2), "秒"]);
+  $("metrics").className = "metrics on";
+  $("metrics").innerHTML = m.map(([k,v,u])=>
+    '<div class="metric"><div class="k">'+k+'</div><div class="v">'+esc(v)+'<small>'+u+'</small></div></div>'
+  ).join("");
+
+  // 实参（体现档位裁剪）
+  const rows = (p.sent_params||[]).map(s=>{
+    const kv = Object.entries(s.params).map(([k,v])=> k+"="+v).join("  ");
+    return '<div class="chip"><b>'+esc(s.cat)+'</b>  '+esc(kv)+'</div>';
+  }).join("");
+  let extra = "";
+  if(p.missing_fields && p.missing_fields.length){
+    extra = '<div class="warn">当前档位未返回字段：'+p.missing_fields.map(esc).join("、")
+      + '。程序已自动降级：摘要回退到 passage，相关性回退到词面命中率，权威度改用域名权重近似。</div>';
+  }
+  if(p.demo){
+    extra += '<div class="warn">'+esc(p.demo_note||"演示数据")+'</div>';
+  }
+  if(rows || extra){
+    $("params").className = "params on";
+    $("params").innerHTML = (rows? '<div class="ttl">本次实际发送的入参（已按档位裁剪）</div>'+rows : "") + extra;
+  }
+
+  // 卡片
+  const cats = CAT_ORDER.filter(c=>p.buckets && p.buckets[c]);
+  Object.keys(p.buckets||{}).forEach(c=>{ if(!cats.includes(c)) cats.push(c); });
+  $("boards").innerHTML = cats.map(cat=>{
+    const list = p.buckets[cat] || [];
+    const color = CAT_COLOR[cat] || "#64748b";
+    const body = list.length ? list.map(d=>{
+      const badges = [];
+      if(d._dom >= 0.9) badges.push('<span class="badge b-auth">权威来源</span>');
+      if(d._fresh >= 0.9) badges.push('<span class="badge b-fresh">近期</span>');
+      badges.push('<span class="badge b-score">★ '+ (d._final||0).toFixed(2) +'</span>');
+      const body2 = d.content || d.passage || "";
+      return '<div class="item">'
+        + '<a href="'+esc(d.url)+'" target="_blank" rel="noopener">'+esc(d.title||"（无标题）")+'</a>'
+        + '<div class="meta"><span class="site">'+esc(d.site||"未知站点")+'</span><span>'+esc(d.date||"")+'</span>'
+        + badges.join("") + '</div>'
+        + (body2? '<div class="excerpt">'+esc(body2)+'</div>':'')
+        + '</div>';
+    }).join("") : '<div class="empty">该类暂无结果</div>';
+    return '<section class="board"><div class="board-hd">'
+      + '<span class="dot" style="background:'+color+'"></span>'
+      + '<h2>'+esc(cat)+'</h2><span class="cnt">'+list.length+' 条</span></div>'
+      + '<div class="board-bd">'+body+'</div></section>';
+  }).join("");
+
+  $("actions").className = "actions on";
+}
+
+function download(name, text){
+  const blob = new Blob([text], {type:"text/markdown;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+
+$("copyBtn").addEventListener("click", async ()=>{
+  if(!lastPack) return;
+  const r = await fetch("/api/export", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({pack:lastPack})});
+  const md = await r.text();
+  try{ await navigator.clipboard.writeText(md); $("copyBtn").textContent = "已复制"; }
+  catch(e){ download((lastPack.topic||"素材包")+".md", md); }
+  setTimeout(()=>{ $("copyBtn").textContent = "复制 Markdown"; }, 1600);
+});
+
+// 支持通过 ?q=课题 直接出结果，便于分享固定课题与截图
+(function(){
+  const q = new URLSearchParams(location.search).get("q");
+  if(q){ $("topic").value = q; doSearch(); }
+})();
+
+$("dlBtn").addEventListener("click", async ()=>{
+  if(!lastPack) return;
+  const r = await fetch("/api/export", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({pack:lastPack})});
+  const md = await r.text();
+  download("备课素材包-"+ (lastPack.topic||"课题") +".md", md);
+});
+</script>
+</body>
+</html>
